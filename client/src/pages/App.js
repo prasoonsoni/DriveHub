@@ -12,19 +12,55 @@ import {
     Text,
     useColorModeValue,
     useColorMode,
-    HStack
+    HStack,
+    useToast,
+    Progress
 } from '@chakra-ui/react';
 import { SunIcon, MoonIcon } from "@chakra-ui/icons"
 import { AiOutlineFileAdd, AiOutlineCloudUpload, AiOutlineDelete } from "react-icons/ai"
 import { FiFile } from "react-icons/fi"
+import { storage } from '../config/firebase'
+import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage"
 const App = () => {
     const { colorMode, toggleColorMode } = useColorMode()
     const fileRef = React.useRef(null)
+    const toast = useToast()
     const [file, setFile] = React.useState(null)
+
+    const [progress, setProgress] = React.useState(0)
+    const [uploading, setUploading] = React.useState(false)
+    const [status, setStatus] = React.useState("")
+
+    const handleSubmit = async () => {
+
+        if (!file) {
+            toast({ title: "Please Select a file.", status: "error", duration: 2000 })
+            return
+        }
+        setUploading(true)
+        setStatus("Uploading File...")
+        const storageRef = ref(storage, `${file.name}`)
+        const uploadTask = uploadBytesResumable(storageRef, file)
+        uploadTask.on("state_changed", (snapshot) => {
+            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+            setProgress(progress)
+        }, (err) => {
+            toast({ title: err.message, status: "error", duration: 2000 })
+        }, async () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                console.log(downloadURL)
+                setUploading(false)
+                toast({ title: "File Uploaded Successfully", status: "success", duration: 3000 })
+                setFile(null)
+
+            })
+        })
+    }
+
     return (
         <Container maxW="5xl" p={{ base: 5, md: 10 }} alignContent="center" justifyContent="center">
             <HStack m={5} display="flex" justifyContent="end">
-                <Button onClick={toggleColorMode}>{colorMode === "dark" ? <SunIcon /> : <MoonIcon />}</Button>
+                <Button colorScheme='gray' onClick={toggleColorMode}>{colorMode === "dark" ? <SunIcon /> : <MoonIcon />}</Button>
             </HStack>
             <Stack spacing={4} maxW={{ base: '20rem', sm: '25rem' }} margin="0 auto">
                 <Stack align="center" spacing={2}>
@@ -62,9 +98,11 @@ const App = () => {
                             rounded="md"
                             w="100%"
                             disabled>
-                            {file === null ? "No File Selected" : file.name}
+                            {file === null ? "No File Selected" : file.name.length < 20 ? file.name : file.name.slice(0, 20) + "..."}
                         </Button>
-                        {file && <Button
+                        {uploading && <Progress value={progress} colorScheme='blue' w="full" rounded="md" />}
+                        {uploading && <Text>{status}</Text>}
+                        {file && !uploading && <Button
                             colorScheme='red'
                             onClick={() => setFile(null)}
                             leftIcon={<AiOutlineDelete />}
@@ -72,16 +110,17 @@ const App = () => {
                             w="100%">
                             DeleteFile
                         </Button>}
-                        <Button
+                        {!uploading && <Button
                             colorScheme='blue'
                             leftIcon={<AiOutlineFileAdd />}
                             onClick={() => fileRef.current.click()}
                             rounded="md"
                             w="100%">
                             {file === null ? "Select File" : "Change File"}
-                        </Button>
-                        {file && <Button
+                        </Button>}
+                        {file && !uploading && <Button
                             colorScheme='green'
+                            onClick={handleSubmit}
                             leftIcon={<AiOutlineCloudUpload />}
                             rounded="md"
                             w="100%">
