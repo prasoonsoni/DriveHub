@@ -14,9 +14,19 @@ import {
     useColorMode,
     HStack,
     useToast,
-    Progress
+    Progress,
+    Link
 } from '@chakra-ui/react';
-import { SunIcon, MoonIcon } from "@chakra-ui/icons"
+import {
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalCloseButton,
+    useDisclosure
+} from '@chakra-ui/react'
+
+import { SunIcon, MoonIcon, CopyIcon } from "@chakra-ui/icons"
 import { AiOutlineFileAdd, AiOutlineCloudUpload, AiOutlineDelete } from "react-icons/ai"
 import { FiFile } from "react-icons/fi"
 import { storage } from '../config/firebase'
@@ -27,10 +37,11 @@ const App = () => {
     const fileRef = React.useRef(null)
     const toast = useToast()
     const [file, setFile] = React.useState(null)
-
+    const [url, setUrl] = React.useState("")
     const [progress, setProgress] = React.useState(0)
     const [uploading, setUploading] = React.useState(false)
     const [status, setStatus] = React.useState("")
+    const { isOpen, onOpen, onClose } = useDisclosure()
 
     const handleSubmit = async () => {
 
@@ -66,8 +77,9 @@ const App = () => {
                     toast({ title: json.message, status: "error", duration: 2000 })
                     return
                 }
-                console.log(json.shortenUrl[0])
+                setUrl(json.shortenUrl[0])
                 toast({ title: "File Uploaded Successfully", status: "success", duration: 2000 })
+                onOpen()
                 setUploading(false)
                 setFile(null)
                 setStatus("")
@@ -77,6 +89,23 @@ const App = () => {
 
     return (
         <Container maxW="5xl" p={{ base: 5, md: 10 }} alignContent="center" justifyContent="center">
+            <Modal size="sm" onClose={onClose} isOpen={isOpen} isCentered motionPreset='slideInBottom' closeOnOverlayClick={false}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Your File's URL</ModalHeader>
+                    <ModalCloseButton />
+                    {/* <ModalBody> */}
+                    <HStack
+                        w="full"
+                        p={3}>
+                        <Button as={Link} w="full" href={url} target="_blank">{url}</Button>
+                        <HStack m={5} display="flex" justifyContent="end">
+                            <Button  w="40px" colorScheme='gray' onClick={() => { navigator.clipboard.writeText(url); toast({ title: "Copied to Clipboard", status: "success", duration: 2000 }) }} ><CopyIcon /></Button>
+                        </HStack>
+                    </HStack>
+                    {/* </ModalBody> */}
+                </ModalContent>
+            </Modal>
             <HStack m={5} display="flex" justifyContent="end">
                 <Button colorScheme='gray' onClick={toggleColorMode}>{colorMode === "dark" ? <SunIcon /> : <MoonIcon />}</Button>
             </HStack>
