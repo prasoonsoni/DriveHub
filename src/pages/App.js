@@ -21,6 +21,7 @@ import { AiOutlineFileAdd, AiOutlineCloudUpload, AiOutlineDelete } from "react-i
 import { FiFile } from "react-icons/fi"
 import { storage } from '../config/firebase'
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage"
+const BASE_URL = process.env.REACT_APP_BASE_URL
 const App = () => {
     const { colorMode, toggleColorMode } = useColorMode()
     const fileRef = React.useRef(null)
@@ -46,13 +47,30 @@ const App = () => {
             setProgress(progress)
         }, (err) => {
             toast({ title: err.message, status: "error", duration: 2000 })
-        }, async () => {
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+        }, () => {
+            getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
                 console.log(downloadURL)
+                setStatus("Shortening URL...")
+                const response = await fetch(`${BASE_URL}/short`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        "url": downloadURL,
+                        "back_half": ""
+                    }),
+                });
+                const json = await response.json()
+                if (!json.success) {
+                    toast({ title: json.message, status: "error", duration: 2000 })
+                    return
+                }
+                console.log(json.shortenUrl[0])
+                toast({ title: "File Uploaded Successfully", status: "success", duration: 2000 })
                 setUploading(false)
-                toast({ title: "File Uploaded Successfully", status: "success", duration: 3000 })
                 setFile(null)
-
+                setStatus("")
             })
         })
     }
