@@ -100,7 +100,7 @@ const App = () => {
                         p={3}>
                         <Button as={Link} w="full" href={url} target="_blank">{url}</Button>
                         <HStack m={5} display="flex" justifyContent="end">
-                            <Button  w="40px" colorScheme='gray' onClick={() => { navigator.clipboard.writeText(url); toast({ title: "Copied to Clipboard", status: "success", duration: 2000 }) }} ><CopyIcon /></Button>
+                            <Button w="40px" colorScheme='gray' onClick={() => { navigator.clipboard.writeText(url); toast({ title: "Copied to Clipboard", status: "success", duration: 2000 }) }} ><CopyIcon /></Button>
                         </HStack>
                     </HStack>
                     {/* </ModalBody> */}
@@ -109,7 +109,7 @@ const App = () => {
             <HStack m={5} display="flex" justifyContent="end">
                 <Button colorScheme='gray' onClick={toggleColorMode}>{colorMode === "dark" ? <SunIcon /> : <MoonIcon />}</Button>
             </HStack>
-            <Stack spacing={4} maxW={{ base: '20rem', sm: '25rem' }} margin="0 auto">
+            <Stack spacing={4} maxW={{ base: '20rem', sm: '25rem' }} margin="100px auto">
                 <Stack align="center" spacing={2}>
                     <Heading fontSize={{ base: 'xl', sm: '5xl' }}>DriveHub 📁</Heading>
                     <Text fontSize={{ base: 'sm', sm: 'xl' }}>Connecting your files, everywhere you go.</Text>
